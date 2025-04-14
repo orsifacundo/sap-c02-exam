@@ -1298,6 +1298,7 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Multi-account, Multi-Region log aggregation: subscription filter -> Kinesis Data Streams -> Data Firehose -> S3
 
+## Deployment
 
 ### Beanstalk
 
@@ -1335,4 +1336,36 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - If deploying Lambda using SAM then CodeDeploy is used that uses traffic shifting feature between versions of the function.
 
+
+## Networking
+
+### Transit Gateway
+
+- Can peer TG across regions (TG peering). Billed hourly per peering attachment and cross-region data processing.
+
+- Limit VPCs that can communicate via Route Tables
+
+- Only service that supports Multicast
+
+### VPC Endpoints
+
+- VPCe GW: 
+
+    - S3 and DynDB only
+    
+    - Defined at the VPC level
+    
+    - Must update Route Table
+
+    - Can't be extended out of VPC. Doesn't work with VPN, DX, TGW, peering
+
+- VPCe Interface: 
+
+    - ENI with private hostname. If enable Private DNS at creation time then the public DNS name gets resolved to the private DNS name of the VPCe
+
+    - Can use SG with them
+
+    - Enable DNS hostname and Enable DNS support must be enabled
+
+    - Can be shared via DX and VPN
 
