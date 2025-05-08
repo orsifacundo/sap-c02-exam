@@ -375,11 +375,21 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Spot instances: short workloads, cheap, non-reliable.
 
-- Reserved: MINIMUM 1 year. For long workloads
+- Reserved: MINIMUM 1 year
+
+    - Standard RI: for long workloads
 
     - Convertible RI: you can change the instance families, OS, etc. Less discount than Standard RI.
 
     - All upfront payment (+discount) -> Partial upfront payment -> no upfront (-discount)
+
+- Saving plans: commitment for certain usage for 1 to 3 years
+
+    - EC2 instance SP: same discount as Standard RI. Specific instance family and region. Flexible size, os.
+
+    - Compute SP: same discount as Convertible RI. Flexible instance family, region and compute type, os.
+
+    - SageMaker SP
 
 - Dedicated instance: no other customer shares your hardware. No control over instance placement.
 
@@ -1138,6 +1148,18 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Supported exec start rate 2k/s (Standards) and 100k/s (Express)
 
+- Standard workflows
+
+    - ideal for long-running, auditable workflows, as they show execution history and visual debugging.
+
+    - have exactly-once workflow execution and can run for up to one year. This means that each step in a Standard workflow will execute exactly once.
+
+- Express workflows
+
+    - ideal for high-event-rate workloads, such as streaming data processing and IoT data ingestion.
+
+    - have at-least-once workflow execution and can run for up to five minutes. This means that one or more steps in an Express Workflow can potentially run more than once, while each step in the workflow executes at least once.
+
 - Not integrated with Mechanical Turk
 
 ### SQS
@@ -1336,7 +1358,6 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - If deploying Lambda using SAM then CodeDeploy is used that uses traffic shifting feature between versions of the function.
 
-
 ## Networking
 
 ### Transit Gateway
@@ -1368,4 +1389,318 @@ Notes based on my previous knowledge: some things might have been left out on pu
     - Enable DNS hostname and Enable DNS support must be enabled
 
     - Can be shared via DX and VPN
+
+### PrivateLink
+
+- Uses a NLB on the side of the application to be exposed and an ENI on the side of the consumer.
+
+### VPN (site to site)
+
+- Uses a VPN appliance with a public IP (on the customer side) and Customer Gateway (that represents the VPN appliance) that points to the on-prem public IP appliance + a Virtual Private Gateway or Transit Gateway (on AWS side)
+
+- There are 2 VPN tunnels for redundancy using IPSec
+
+- Route propagation statically (modifying route tables on each side) or dynamically using BGP (specify the gateways ASNs)
+
+- Site to Site VPN:
+
+    - can't be used to access internet (from on-prem) via AWS VPC if using NAT Gateway (can be used with NAT instance)
+
+    - can be used to access internet (from AWS VPC) via on-prem gateway
+
+#### CloudHub
+
+- Can be used to connect up to 10 Customer Gateways for each Virtual Private Gateway
+
+- The different on-prem connections can talk to each other over the VPG (failover use case)
+
+### Direct Connect
+
+- Virtual Interfaces:
+
+    - Public VIF: connect to public AWS endpoints (S3, EC2, etc)
+
+    - Private VIF: connect to resources on the VPC. VPCe can be accessed as well
+
+    - Transit VIF: connect to VPC via TG
+
+- Data NOT encrypted but is private. Have to use VPN over DX to get IPSec encrypted connection
+
+- 2 type of connections: Dedicated (higher throughput) and Hosted (more flexible in terms of throughput)
+
+- Link Aggregation Group (LAG): increase speed and failover by summing up existing DX connections into a logical one (up to 4 connections)
+
+- Direct Connect Gateway: to setup a DX to one or more VPC in same or different regions. Can be used also with TG.
+
+    - SiteLink: used to create a private network connection between on-premises data centers by connecting them to DX locations. Bypasses AWS Regions
+
+## Cost
+
+### Cost Allocation Tags
+
+- Showed up as columns in reports
+
+- 2 kind: AWS generated (starts with aws:) and User tags (starts with user:)
+
+## Tag Editor
+
+- Used to search multiple resources by region/type and manage their tags on a single place
+
+## Trusted Advisor
+
+- Full TA: Business and Enterprise support plans. Ability to set CW alarms when reaching limits. Programmatic access using AWS Support API
+
+- Basic and Developer plans only have 7 checks
+
+## Service Quotas
+
+- Create a CW Alarm to be notified when a Service Quota is next to the limit to take action (request quota increase or shutdown resources)
+
+## Budgets
+
+- 4 types: usage, cost, reservation and savings plans
+
+- Budget actions: automatically run when budget exceeded. 3 actions: Apply IAM policy, Apply SCP to OU, Stop EC2/RDS. You can add a workflow approval process.
+
+## Migration
+
+### Storage Gateway
+
+#### S3 File Gateway
+
+- Recently used data is cached in the file gateway
+
+- If file system is restored to a previous version then RefreshCache API on the GW must be used
+
+- All S3 tiers, NOT Glacier
+
+#### Volume Gateway
+
+- Uses iSCSI protocol. Backed by EBS snapshots stored in S3
+
+### Snow Family
+
+#### Snowball
+
+- 2 types: Storage Optimized (good for data migrations of a lot of data) and Computed Optimized (for Edge computing: process data on edge location where limited or no internet connectivity)
+
+- To improve transfer performance: 
+
+    - Don't perform multiple write operations at one time
+
+    - Don't transfer small files: zip several of them
+
+    - Don't perform other operations during transger
+
+    - Reduce local network usage
+
+    - Eliminate unnecessary hops
+
+    - Use Amazon S3 Adaptaer for Snowball to increase transfer rate from 25/40 MB/s to 250/400 MB/s
+
+### DMS (Database Migration Service)
+
+- Self-healing, resilient, must create an EC2 instance to run it, supports Continuous Data Replication (CDC)
+
+- Redshift, OpenSearch and Kinesis Data Stream are ONLY Targets. S3 can be both source and target
+
+- Can be combined with Snowball for large data migrations or migration with low network bandwidth
+
+    - Use SCT to extract data locally and load into Snowball
+
+    - Ship the Snowball device, once it gets to destination the data is laoded into S3
+
+    - Use DMS to migrate from S3 to target data store
+
+#### Schema Convertion Tool (SCT)
+
+- Not used if migrating same DB engine (on-prem PostgreSQL to RDS PostgreSQL)
+
+### Cloud Adoption Readiness Tool (CART)
+
+- Helps develop effective and efficient plans for cloud adoption based on CAF
+
+### Disaster Recovery
+
+#### Backup/Restore
+
+- High RPO, High RTO, Cheaper
+
+#### Pilot Light
+
+- Critical Core is always running in the cloud
+
+- Faster than B&R but things have to be spin up
+
+#### Warm Standby
+
+- Full system running but at minimum size
+
+#### Hot Site
+
+- Very low RTO, Very expensive
+
+- Full production scale is running in AWS and On-Prem
+
+#### Considerations
+
+#### Backups
+
+- EBS snapshots, RDS automated bkps/snapshots
+
+- Regular pushes to S3, Lifecycle policies, Cross Region Replication
+
+- From on-prem: Snowball, Storage Gateway
+
+#### HA
+
+- R53 to migrate DNS from Region to Region
+
+- RDS Multi-AZ, ElastiCache Multi-AZ, EFS, S3
+
+- S2S VPN as backup to Direct Connect
+
+#### Replication
+
+- RDS replication (Cross Region), AWS Aurora + Global Databases
+
+- Database replication from on-prem to AWS
+
+- Storage Gateway
+
+#### Automation
+
+- CloudFormation/Elastic Beanstalk to re-create environment
+
+- Recover/Reboot EC2 instances based on CloudWatch alarms
+
+- Lambda to customize automations
+
+#### Chaos Engineering
+
+- Randomly terminating production components to test for failure and recovery
+
+- Use Fault Injection Simulator (FIS): supports EC2, ECS, EKS, RDS
+
+### VM Migration
+
+#### Application Discovery Services
+
+- Plan migrations by gathering information about on-prem systems
+
+- 2 types of agents:
+
+    - App Discovery Agentless Connector: OVA deployed in VMWare, OS Agnostic, gathers config, performance, etc
+
+    - Agent-based Discovery: gathers config, performance, running processes, network connections. Supports Windows Server and Linux Severs
+
+- Resulting data exported as CSV or into AWS Migration Hub
+
+- Explore data stored in S3 with Athena/QS
+
+#### Application Migration Service (MGN)
+
+- Used for rehosting (migrate) servers from on-prem/cloud-based into AWS
+
+- Uses an AWS Replication Agent to replicate
+
+#### Elastic Disaster Recovery (DRS)
+
+- Used for quickly and easily recover servers into AWS
+
+- Uses an AWS Replication Agent to replicate
+
+### AWS Backup
+
+- Supports Cross-Region and Cross-Account backups
+
+- Backup Vault Lock: enforce WORM, not even the root user can delete backups when enabled
+
+## Machine Learning
+
+### Rekognition
+
+- Find objects, people, text, scenes in images and videos
+
+- Use cases: labeling, content moderation, text detection, face detection/analysis/searc/verification, celebrity recognition, pathing (sports game analysis)
+
+- Content moderation: set a confidence threashold for items that will be flagged, this items can be manually reviewed in Amazon Augmentes AI (A2I)
+
+### Transcribe
+
+- Speech into text
+
+- Can automatically remove PII using Redaction
+
+- Supports Automatic Language Identification
+
+### Polly
+
+- Text into Speech
+
+- Can improve Pronunciation with Lexicons and SynthetizeSpeech: i.e AWS into Amazon Web Services or s3cr3ts into secrets
+
+- Can Customize with Speech Synthesis Markup Language (SSML)
+
+### Lex & Connect
+
+- Lex: automated speech recognition (ASR), natural language understanding (NLU). Help build chatbots, call center bots
+
+- Connect: virtual contact center, integrates with CRM systems
+
+- Workflow: Call into Connect, streams to Lex that recognize the intent and invoke a Lambda to do something
+
+### Comprehend
+
+- Natural Language Processing (NLP)
+
+- To find insights and relationships in text
+
+- Use case: analyse customer interaction (positive/negative experience), group articles by topic
+
+#### Comprehend Medical
+
+- Detects and resturns useful information in clinical text (detect Protected Health Information - PHI)
+
+- Helps convert from unstructered text to structured data
+
+### SageMaker
+
+- Service that helps with labeling, building, training and deploying ML models
+
+### Kendra
+
+- Document search service. Extract answers from within documents.
+
+### Personalize
+
+- Build apps with real-time personalized recommendations. No need to build, train and deploy complex ML solutions
+
+- Integrates into existing websites, apps, SMS, email marketing systems. Provides a customized personalized API for systems to consume
+
+### Textract
+
+- Extract text from any scanned document, forms, tables, images, pdf
+
+## Other Services
+
+- Alexa for Business: measure and increase utilization of meeting rooms in workplace
+
+- Kinesis Video Stream: one video stream per streaming device (producer), data stored in S3 (don't have access to it), stream CAN'T be output directly to S3 (custom solution has to be built), can be integrated with Rekognition (for facial recognition for example)
+
+- Workspaces: can use Application Manager (WAM) to deploy and manage virtualized application containers. Can use IP Groups to allow connections from certain IPs
+
+- AppStream 2.0: stream applications and deliver from within a web browser
+
+- Device Farm: application testing service for mobile/webapp on real browsers and real mobile devices. Generates videos and logs of issues. Can remotely log-in to devices for debugging
+
+- SES: can use Configuration Sets to analyze sent email. Event destinations to Data FireHose (metrics for sent emails) and SNS (immediate feedback on bounce and complaints). IP pool management to manage pools of IPs to send particular types of emails from
+
+- Pinpoint: 2-way marketing communication service. Supports email, sms, voice and in-app messaging. To run campaigns by sending marketing or bulk SMS messages. Better for managing highly-targeted segments.
+
+
+
+
+
+
 
