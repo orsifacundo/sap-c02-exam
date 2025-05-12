@@ -1412,7 +1412,7 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Can be used to connect up to 10 Customer Gateways for each Virtual Private Gateway
 
-- The different on-prem connections can talk to each other over the VPG (failover use case)
+- The different on-prem connections can talk to each other over the VPG (failover use case). VPN or DX.
 
 ### Direct Connect
 
@@ -1484,19 +1484,21 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - 2 types: Storage Optimized (good for data migrations of a lot of data) and Computed Optimized (for Edge computing: process data on edge location where limited or no internet connectivity)
 
+- Each device up to 80TB. 5-7 days turnoaround time.
+
 - To improve transfer performance: 
 
     - Don't perform multiple write operations at one time
 
     - Don't transfer small files: zip several of them
 
-    - Don't perform other operations during transger
+    - Don't perform other operations during transfer
 
     - Reduce local network usage
 
     - Eliminate unnecessary hops
 
-    - Use Amazon S3 Adaptaer for Snowball to increase transfer rate from 25/40 MB/s to 250/400 MB/s
+    - Use Amazon S3 Adapter for Snowball to increase transfer rate from 25/40 MB/s to 250/400 MB/s
 
 ### DMS (Database Migration Service)
 
