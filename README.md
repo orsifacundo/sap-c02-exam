@@ -278,6 +278,14 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - For usage with VPCe then the conditions aws:SourceVpc and aws:SourceVpce are used. Otherwise aws:SourceIP is used for public internet.
 
+#### Replication
+
+- You can use Amazon S3 event notifications to track replication objects. Amazon EventBridge does not support receiving S3 object replication events.
+
+- S3 RTC replicates most objects that you upload to Amazon S3 in seconds and 99.99 percent of those objects within 15 minutes.
+
+- 
+
 #### Access Points
 
 - Has a Policy similar to a Bucket Policy. 
@@ -394,6 +402,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 - Dedicated instance: no other customer shares your hardware. No control over instance placement.
 
 - Dedicated hosts: entire physical server. Complete control over placement on the server. Great for software licenses that operate at the Core/CPU socket level.
+
+![](./images/saving.png)
 
 #### Metrics
 
@@ -699,6 +709,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - R53 access logs only to CloudWatch Logs
 
+- For EC2 instances, always use a Type A Record without an Alias. For ELB, Cloudfront, and S3, always use a Type A Record with an Alias, and finally, for RDS, always use the CNAME Record with no Alias.
+
 #### Alias records
 
 - Only points to AWS Resources (xxx.amazonaws.com)
@@ -775,7 +787,15 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Only for Public resources. About 15 global R53 Health Checkers.
 
-- Pass ony if endpoint responds with 2xx or 3xxx. Pass/Fail based on text of the first **5120 bytes** of the response.
+- Pass ony if endpoint responds with 2xx or 3xxx. Pass/Fail based on text of the first **5120 bytes** of the response. 
+
+- Records without a health check are always considered healthy. If no record is healthy, all records are deemed to be healthy
+
+- Route 53 aggregates the data from the health checkers, and if more than 18% of health checkers report that an endpoint is healthy, Route 53 considers it healthy.
+
+- HTTPS health checks don't validate SSL/TLS certificates, so checks don't fail if a certificate is invalid or expired.
+
+- If you specify a non-AWS endpoint, an additional charge applies. Charges for a health check apply even when the health check is disabled.
 
 - Types:
 
@@ -853,7 +873,7 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 #### Volume types
 
-- gp2/gp3 (SSD): general purpose, balance price/performance. IOPS 16k
+- gp2/gp3 (SSD): general purpose, balance price/performance. IOPS 16k. Increase of 3 IOPS per GB.
 
 - io1/io2 Block Express (SSD): mission critical low-latency or high throughput workloads. IOPS 64k/256k
 
@@ -862,6 +882,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 - sc1 (hdd): lowest cost, less frequent accessed workloads
 
 - Only gp and io can be boot volumes
+
+![](./images/ebs.png)
 
 #### Snapshots
 
@@ -1210,6 +1232,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
         - Par per stream per hour & data IN/OUT per GB
 
+- With enhanced fan-out developers can register stream consumers to use enhanced fan-out and receive their own 2MB/second pipe of read throughput per shard, and this throughput automatically scales with the number of shards in a stream.
+
 ### Managed Streaming for Apache Kafka (MSK)
 
 - Fully Managed Kafka on AWS (multi-AZ) with data stored on EBS or MSK Serverless. Similar use case as Kinesis Data Streams.
@@ -1488,15 +1512,15 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - To improve transfer performance: 
 
-    - Don't perform multiple write operations at one time
+    - Perform multiple write operations at one time – To do this, run each command from multiple terminal windows on a computer with a network connection to a single AWS Snowball Edge device.
 
-    - Don't transfer small files: zip several of them
+    -  Transfer small files in batches – Each copy operation has some overhead because of encryption. To speed up the process, batch files together in a single archive. When you batch files together, they can be auto-extracted when they are imported into Amazon S3. For more information, see Batching small files to improve data transfer performance to Snowball Edge.
 
-    - Don't perform other operations during transfer
+    -  Don't perform other operations on files during transfer – Renaming files during transfer, changing their metadata, or writing data to the files during a copy operation has a negative impact on transfer performance. We recommend that your files remain in a static state while you transfer them.
 
-    - Reduce local network usage
+    -  Reduce local network use – Your AWS Snowball Edge device communicates across your local network. So you can improve data transfer speeds by reducing other local network traffic between the AWS Snowball Edge device, the switch it's connected to, and the computer that hosts your data source.
 
-    - Eliminate unnecessary hops
+    -  Eliminate unnecessary hops – We recommend that you set up your AWS Snowball Edge device, your data source, and the computer running the terminal connection between them so that they're the only machines communicating across a single switch. Doing so can improve data transfer speeds.
 
     - Use Amazon S3 Adapter for Snowball to increase transfer rate from 25/40 MB/s to 250/400 MB/s
 
@@ -1685,6 +1709,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 - Extract text from any scanned document, forms, tables, images, pdf
 
 ## Other Services
+
+- Quikcisght: By creating a VPC connection in QuickSight, you're adding an elastic network interface in your VPC. This network interface allows QuickSight to exchange network traffic with a network instance within your VPC. You can provide all of the standard security controls for this network traffic, as you do with other traffic in your VPC. Route tables, network access control lists (ACLs), subnets, and security groups settings all apply to network traffic to and from QuickSight in the same way that they apply to traffic between other instances in your VPC
 
 - Alexa for Business: measure and increase utilization of meeting rooms in workplace
 
