@@ -939,28 +939,6 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
     - One Zone: one AZ
 
-- Storage Class Analysis: helps decide when to transition objects to right storage class. Only works with Standard and Standard-IA (not One-Zone or Glacier)
-
-### S3
-
-#### Storage classes
-
-![](./images/s3-storage_classes.png)
-
-#### Performance
-
-- 3500 PUT/COPY/DELETE requests per second per prefix and 5500 GET/HEAD requests per second per prefix. If you have a file in different prefix then this are added up.
-
-- For uploads:
-
-    - Muti-part upload: recommended for > 100MB, mandatory for > 5GB files. Can define a lifecycle policy to delete incomplete multi-part uploads after X number of days
-
-    - Transfer acceleration can be used to increase file transfer by transfering files to edge location and this forwards to destination S3 bucket. Compatible with multi-part upload.
-
-- For downloads: 
-
-    - Byte-range fetch: parallelize GETs by requesting specific byte ranges. Can also be used to fetch a file header.
-
 ### FSx
 
 - It's like what RDS does for DBs: you launch 3rd party highperformance FS on AWS.
@@ -992,6 +970,28 @@ Notes based on my previous knowledge: some things might have been left out on pu
 ### OpenZFS
 
 - Also supports pint-in-time instantaneous cloning but NO de-deduplication.
+
+### S3
+
+#### Storage classes
+
+- Storage Class Analysis: helps decide when to transition objects to right storage class. Only works with Standard and Standard-IA (not One-Zone or Glacier)
+
+![](./images/s3-storage_classes.png)
+
+#### Performance
+
+- 3500 PUT/COPY/DELETE requests per second per prefix and 5500 GET/HEAD requests per second per prefix. If you have a file in different prefix then this are added up.
+
+- For uploads:
+
+    - Muti-part upload: recommended for > 100MB, mandatory for > 5GB files. Can define a lifecycle policy to delete incomplete multi-part uploads after X number of days
+
+    - Transfer acceleration can be used to increase file transfer by transfering files to edge location and this forwards to destination S3 bucket. Compatible with multi-part upload.
+
+- For downloads: 
+
+    - Byte-range fetch: parallelize GETs by requesting specific byte ranges. Can also be used to fetch a file header.
 
 ### Deployment options
 
