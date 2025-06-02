@@ -78,7 +78,7 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
     - Establish trust connections with on-prem AD: needs VPN or Direct Connect. There is one-way trust or two-way trust (forest trust) -> this is NOT sync/replication, each AD has its own users independently but talk to each other.
 
-    - *Replicatio*n*: if this is needed then an AD on EC2 self-managed replica is needed in the cloud so the on-prem AD replicates to this cloud AD and then establish a trust to the AWS Managed AD
+    - *Replication*: if this is needed then an AD on EC2 self-managed replica is needed in the cloud so the on-prem AD replicates to this cloud AD and then establish a trust to the AWS Managed AD
 
 - Supports MFA
 
@@ -167,7 +167,7 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Define Tag keys and their allowed values
 
-- Prevents any non-compliant tagging operations on specified services and resources. Generate a report for non-compliant. EventBridge to monitor non-compliant
+- Prevents any non-compliant tagging operations on specified services and resources (enforcement has no effect on resources that are created without tags). Generate a report for non-compliant. EventBridge to monitor non-compliant
 
 #### AI opt-out Policies
 
@@ -284,8 +284,6 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - S3 RTC replicates most objects that you upload to Amazon S3 in seconds and 99.99 percent of those objects within 15 minutes.
 
-- 
-
 #### Access Points
 
 - Has a Policy similar to a Bucket Policy. 
@@ -319,7 +317,6 @@ Notes based on my previous knowledge: some things might have been left out on pu
     - Trigger EventBridge and chain it with Lambda
 
     - Auto-remediate with SSM Automations
-
 
 ## Compute & Load Balancing
 
@@ -445,6 +442,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
         - Elastic Fabric Adapter (EFA): improved ENA for HPC and tightly coupled workloads. Only for LINUX (bypasses the underlying OS to provide low latency)
 
+    - Disable EC2 hyperthreading
+
 - For Storage:
 
     - EBS: up to 256K IOPS (with io2 Block Express)
@@ -473,7 +472,7 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Target Tracking Scaling: most simple, i.e ASG CPU average around 40%
 
-- Simple/Step Scaling: based on CW Alarm trigger
+- Simple/Step Scaling: based on CW Alarm trigger (single or set of scaling adjustments)
 
 - Scheduled Actions: for known usage patterns
 
@@ -899,6 +898,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
  - Works with **LINUX** instances, can be multi-AZ and works with on-prem (via VPN or DX)
 
+ - Uses the NFS protocol which is primarily used by Linux AMIs. This filesystem does not support Windows ACLs.
+
  - Has a SG attached
 
  - Support Cross-region replication
@@ -923,22 +924,6 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
     - Elastic: scales up/down depending on workloads. For unpredictable workloads.
 
-#### Storage classes
-
-- Tiers (implemented via lifecycle policies):
-
-    - Standard: frequent accessed files
-
-    - IA: infrequent access
-
-    - Archive: rarely accessed
-
-- Availability:
-
-    - Standard: Multi-AZ
-
-    - One Zone: one AZ
-
 ### FSx
 
 - It's like what RDS does for DBs: you launch 3rd party highperformance FS on AWS.
@@ -946,6 +931,8 @@ Notes based on my previous knowledge: some things might have been left out on pu
 #### Windows FS
 
 - Can be mounted on Linux EC2 instances.
+
+- Accessible over SMB protocol. Since it is built on Windows Server, it natively supports administrative features such as user quotas, end-user file restore, and Microsoft Active Directory integration.
 
 - SSD and HDD supported options. 
 
@@ -961,6 +948,22 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 - Data Lazy Loading: only the data that is actually processed is loaded. When the client needs it then it's loaded from S3 to reduce requests and costs.
 
+#### Deployment options
+
+- Scratch FS:
+
+    - For short-term processing and optimize costs
+
+    - Data is NOT replicated
+
+    - HIGH burst
+
+- Persistent FS:
+
+    - For long-term processing and sensitive data
+
+    - Data is replicate in same AZ
+
 ### NetApp ONTAP
 
 - Supports iSCSI protocol
@@ -973,9 +976,35 @@ Notes based on my previous knowledge: some things might have been left out on pu
 
 ### S3
 
-#### Storage classes
+#### Classess/Tiers
+
+- Tiers (implemented via lifecycle policies):
+
+    - Standard: frequent accessed files
+
+    - IA: infrequent access
+
+    - Archive: rarely accessed
+
+- Availability:
+
+    - Standard: Multi-AZ
+
+    - One Zone: one AZ
 
 - Storage Class Analysis: helps decide when to transition objects to right storage class. Only works with Standard and Standard-IA (not One-Zone or Glacier)
+
+- Intelligent Tier:
+
+    - Frequent Access == Standard (same price)
+
+    - IA == Standard IA (same price)
+
+    - Deep Archive == Glacier Deep Archive (+5 hours to obtain)
+
+    - Archive == Glacier Flexible Retrieval (minutes to hours to obtain)
+
+    - Archive Instant == Glacier Instant Retrieval (seconds to obtain)
 
 ![](./images/s3-storage_classes.png)
 
@@ -992,22 +1021,6 @@ Notes based on my previous knowledge: some things might have been left out on pu
 - For downloads: 
 
     - Byte-range fetch: parallelize GETs by requesting specific byte ranges. Can also be used to fetch a file header.
-
-### Deployment options
-
-- Scratch FS:
-
-    - For short-term processing and optimize costs
-
-    - Data is NOT replicated
-
-    - HIGH burst
-
-- Persistent FS:
-
-    - For long-term processing and sensitive data
-
-    - Data is replicate in same AZ
 
 ### DataSync
 
